@@ -1,29 +1,40 @@
-recursiveComponentGlue();
+// globals
+const sourceElements = ['script'];
 
-// recursively load html components into index.html
-function recursiveComponentGlue() {
+// run start
+start();
+
+/**
+ * Starting point for application
+ */
+function start() {
     const body = document.querySelector('body');
-    glueComponent(body);
+    recursiveComponentGlue(body);
 }
 
-function glueComponent(htmlElement) {
-    if (htmlElement.children.length === 0) {
-        return;
+/** 
+ * Recursively load html components into index.html
+ */
+async function recursiveComponentGlue(parentElement) {
+    const children = Array.from(parentElement.children).filter(child => !sourceElements.includes(child.localName));
+    for(const child of children) {
+        if (child.localName.includes('main-')) {
+            await loadComponent(parentElement, child.localName);
+        }
+
+        if (child.children.length > 0) {
+            recursiveComponentGlue(child);
+        }
     }
+}
 
-    const sourceElements = ['script'];
-
-    const childrenArr = Array.from(htmlElement.children);
-    console.log(childrenArr);
-    const childrenArrClean = childrenArr.filter(child => !sourceElements.includes(child.localName));
-    console.log(childrenArrClean);
-
-    // load custom html components into dom
-    for(const child of childrenArrClean) {
-        // load html file into dom
-        console.log(child);
-
-
-        
-    }
+/**
+ * Injects node's html from related html file into the parentNode
+ * @param {Node} parentNode parent Node of node
+ * @param {string} componentName the name of the html file to extract contents from
+ */
+async function loadComponent(parentNode, componentName) {
+    const elementInParent = parentNode.querySelector(componentName);
+    const response = await fetch(`components/${componentName}.html`)
+    elementInParent.innerHTML = await response.text();
 }
